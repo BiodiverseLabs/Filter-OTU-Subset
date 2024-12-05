@@ -2,6 +2,8 @@
 
 This repository contains a Python script that automates the filtering of a FASTA file based on metadata and an OTU (Operational Taxonomic Unit) table. The script dynamically detects input files in its working directory and allows the user to specify a minimum read threshold for filtering OTUs.
 
+The primary use case is for users that have datasets with a large number of various samples, and they need to quickly isolate the sequences from a subset of those samples. 
+
 ## Features
 
 - **Automatic File Detection**:
