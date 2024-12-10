@@ -14,6 +14,13 @@ if not fasta_file or not metadata_file or not otu_table_file:
 metadata_df = pd.read_excel(metadata_file)
 metadata_sample_ids = set(metadata_df["Sample ID"].tolist())
 
+# Save all extracted sample IDs to a text file
+sample_id_filename = f"extracted_sample_ids-{len(metadata_sample_ids)}samples.txt"
+sample_id_filepath = os.path.join(current_dir, sample_id_filename)
+with open(sample_id_filepath, 'w') as sample_file:
+    for sample_id in metadata_sample_ids:
+        sample_file.write(f"{sample_id}\n")
+
 # Step 2: Load OTU table
 otu_table = pd.read_csv(otu_table_file, sep="\t")
 
@@ -25,15 +32,26 @@ except ValueError:
     min_reads_threshold = 0
 
 # Filter columns to include only those in metadata_sample_ids
-filtered_otu_table = otu_table[["SH_name"] + [col for col in otu_table.columns if col in metadata_sample_ids]]
+filtered_sample_ids = [col for col in otu_table.columns if col in metadata_sample_ids]
+filtered_otu_table = otu_table[["SH_name"] + filtered_sample_ids]
 
-# Identify OTUs with counts greater than the threshold in the filtered OTU table
-filtered_otu_names = set(
-    filtered_otu_table.loc[(filtered_otu_table.iloc[:, 1:] > min_reads_threshold).any(axis=1), "SH_name"]
-)
+# Remove rows (OTUs) where the sum of the row is 0
+filtered_otu_table["Row_Sum"] = filtered_otu_table.iloc[:, 1:].sum(axis=1)
+filtered_otu_table = filtered_otu_table[filtered_otu_table["Row_Sum"] > 0]
 
-# Step 3: Filter the FASTA file based on OTU names
+# Count the number of samples and OTUs
+num_samples = len(filtered_sample_ids)
+num_otus = filtered_otu_table.shape[0]
+
+# Save the new OTU table
+intermediary_otu_filename = f"{os.path.splitext(otu_table_file)[0]}-filtered-{num_samples}samples-{num_otus}otus.txt"
+intermediary_otu_filepath = os.path.join(current_dir, intermediary_otu_filename)
+filtered_otu_table.drop(columns=["Row_Sum"]).to_csv(intermediary_otu_filepath, sep="\t", index=False)
+
+# Step 3: Create a revised FASTA file
+filtered_otu_names = set(filtered_otu_table["SH_name"])
 filtered_sequences = []
+
 with open(fasta_file, 'r') as infile:
     write_flag = False
     current_sequence = ""
@@ -53,15 +71,20 @@ with open(fasta_file, 'r') as infile:
 # Count the total number of sequences
 total_sequences = len(filtered_sequences)
 
-# Construct the output file name dynamically
+# Save the filtered FASTA file
 filtered_fasta_filename = f"{os.path.splitext(fasta_file)[0]}_filtered_{total_sequences}_sequences_min{min_reads_threshold}reads.fa"
-
-# Write the filtered sequences to the output FASTA file
 filtered_fasta_filepath = os.path.join(current_dir, filtered_fasta_filename)
 with open(filtered_fasta_filepath, 'w') as outfile:
     for sequence in filtered_sequences:
         outfile.write(sequence)
 
 # Summary
+print(f"Sample IDs file saved as: {sample_id_filepath}")
+print(f"Intermediary OTU table saved as: {intermediary_otu_filepath}")
 print(f"Filtered FASTA file saved as: {filtered_fasta_filepath}")
 print(f"Total sequences in the filtered FASTA file: {total_sequences}")
+print(f"Number of samples in intermediary OTU table: {num_samples}")
+print(f"Number of OTUs in intermediary OTU table: {num_otus}")
+
+
+
