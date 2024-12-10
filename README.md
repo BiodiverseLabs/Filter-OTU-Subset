@@ -10,14 +10,31 @@ The primary use case is for users that have datasets with a large number of vari
   - Detects `.fa` or `.fasta` files (FASTA sequences).
   - Detects `.xlsx` or `.xls` files (Metadata input).
   - Detects `.txt` files (OTU table).
+- **Metadata Integration**:
+  - Extracts all sample IDs from a metadata Excel file.
+  - Reports all extracted sample IDs in a text file.
+  - Filters the OTU table to retain only columns corresponding to sample IDs.
 - **User-Defined Threshold**:
   - Prompts the user to enter a minimum number of reads for filtering OTUs.
   - Defaults to a threshold of `> 0` if no value is entered.
 - **Dynamic Filtering**:
   - Filters OTUs based on metadata sample IDs and the specified read threshold.
   - Matches sequences in the FASTA file to the filtered OTUs.
-- **Output**
-  - Creates a filtered FASTA file with the total number of sequences and the threshold included in the filename.
+
+## Output Files
+
+1. **Extracted Sample IDs**:
+   - A text file listing all sample IDs from the metadata file.
+   - Filename: `extracted_sample_ids-XXXsamples.txt`.
+
+2. **Filtered OTU Table**:
+   - A text file containing the filtered OTU table with retained OTUs and sample columns.
+   - Filename: `otu_table-filtered-XXXsamples-XXXotus.txt`.
+
+3. **Filtered and Annotated FASTA File**:
+   - A FASTA file with sequences sorted by total reads.
+   - Header format: `>OTU_ID-totalsamplesXXX-totalreadsYYY`.
+   - Filename: `example_filtered_XXX_sequences_minYreads.fa`.
 
 ## Requirements
 
